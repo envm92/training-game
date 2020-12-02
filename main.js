@@ -1,7 +1,6 @@
 class BoxGame extends HTMLElement {
-	constructor(winner) {
+	constructor() {
 		super();
-		this.winner = winner;
 		const shadow =  this.attachShadow({mode: 'open'});
 		const div = document.createElement('div');
 		div.setAttribute('id', 'box');
@@ -31,7 +30,7 @@ class BoxGame extends HTMLElement {
 	onclick() {
 		const shadow =  this.shadowRoot;
 		const div = shadow.getElementById('box');
-		if (this.winner) {
+		if (this.getAttribute('winner') === 'true') {
 			div.style.background = 'blue';
 		} else {
 			div.style.background = 'red';
@@ -62,7 +61,9 @@ class BoardGame extends HTMLElement {
 		this.plays = 0;
 		this.boxes = Array.from({length:this.boxCount},(_, i) => {
 			const box = new BoxGame( this.winner == i );
-			box.addEventListener('click', () => {
+			box.setAttribute('winner', this.winner == i);
+			box.addEventListener('click', (_) => {
+				console.log(box);
 				const isWinner = this.winner == i;
 				this.plays++;
 				if(isWinner) {
