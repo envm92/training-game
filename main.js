@@ -6,8 +6,9 @@ class BoxGame extends HTMLElement {
 		div.setAttribute('id', 'box');
 		shadow.appendChild(div);
 		shadow.appendChild(this.getStyles());
-		this.addEventListener('click', this.onclick);
 	}
+
+	static get observedAttributes() { return ['open']; }
 
 	getStyles() {
 		const style = document.createElement('style');
@@ -27,7 +28,13 @@ class BoxGame extends HTMLElement {
 		return style;
 	}
 
-	onclick() {
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (name == 'open') {
+			this.openBox();
+		}
+	}
+
+	openBox() {
 		const shadow =  this.shadowRoot;
 		const div = shadow.getElementById('box');
 		if (this.getAttribute('winner') === 'true') {
@@ -63,7 +70,7 @@ class BoardGame extends HTMLElement {
 			const box = new BoxGame( this.winner == i );
 			box.setAttribute('winner', this.winner == i);
 			box.addEventListener('click', (_) => {
-				console.log(box);
+				box.setAttribute('open' , '');
 				const isWinner = this.winner == i;
 				this.plays++;
 				if(isWinner) {
