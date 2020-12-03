@@ -22,7 +22,6 @@ class BoxGame extends HTMLElement {
         height: 60px;
         width: 60px;
       }
-      
     `;
     return style;
   }
@@ -185,9 +184,12 @@ class BoardGame extends HTMLElement {
     input.type = 'number';
     input.value = '5';
     input.setAttribute('min', '5');
+    input.setAttribute('max', '10000');
     input.addEventListener('input', (event) => {
-      const value = parseInt(event.target.value);
-      this.setAttribute('box-count', `${(value < 5)? 5 : value}`);
+      let value = parseInt(event.target.value);
+      value = (value < 5 ) ? 5 : value;
+      value = (value > 10000) ?  10000 : value;
+      this.setAttribute('box-count', String(value));
     });
     shadow.appendChild(input);
   }
@@ -204,7 +206,10 @@ class BoardGame extends HTMLElement {
     const div = document.createElement('div');
     div.setAttribute('id', 'board');
     this.boxes.forEach(box => {div.appendChild(box);});
-    div.style.display = 'flex';
+    div.style.display = 'grid';
+    div.style.width = '100%';
+    div.style.height = 'auto';
+    div.style.grid = 'auto-flow / 1fr 1fr 1fr 1fr 1fr';
     shadow.appendChild(div);
   }
 }
