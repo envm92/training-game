@@ -22,7 +22,6 @@ class BoxGame extends HTMLElement {
         height: 60px;
         width: 60px;
       }
-      
     `;
     return style;
   }
@@ -36,10 +35,11 @@ class BoxGame extends HTMLElement {
   openBox() {
     const shadow = this.shadowRoot;
     const div = shadow.getElementById('box');
-    div.style.background = 
-      (this.getAttribute('winner') === 'true') ? 'blue': 'red';
+    div.style.background =
+        (this.getAttribute('winner') === 'true') ? 'blue': 'red';
   }
 }
+
 
 class ScoreGame extends HTMLElement {
   constructor() {
@@ -100,7 +100,6 @@ class ScoreGame extends HTMLElement {
 }
 
 class BoardGame extends HTMLElement {
-
   boxCount = 5;
   winner = 0;
   plays = 0;
@@ -111,6 +110,7 @@ class BoardGame extends HTMLElement {
     this.boxCount =  this.hasAttribute('box-count') ? this.getAttribute('box-count') : 5;
     this.won = 0;
     this.lost = 0;
+    this.drawBoxInput();
     this.drawScore();
     this.startGame();
   }
@@ -133,7 +133,7 @@ class BoardGame extends HTMLElement {
   initGame() {
     this.winner = Math.floor(Math.random() * Math.floor(this.boxCount));
     this.plays = 0;
-    this.boxes = Array.from({length:this.boxCount},(_, i) => {
+    this.boxes = Array.from({length:this.boxCount},(value, i) => {
       const box = new BoxGame( this.winner === i );
       box.setAttribute('winner', String(this.winner === i));
       box.addEventListener('click', (_) => {
@@ -178,26 +178,46 @@ class BoardGame extends HTMLElement {
     shadow.removeChild(shadow.getElementById('board'));
   }
 
+  drawBoxInput() {
+    const shadow = this.attachShadow({mode: 'open'});
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = '5';
+    input.setAttribute('min', '5');
+    input.setAttribute('max', '10000');
+    input.addEventListener('input', (event) => {
+      let value = parseInt(event.target.value);
+      value = (value < 5 ) ? 5 : value;
+      value = (value > 10000) ?  10000 : value;
+      this.setAttribute('box-count', String(value));
+    });
+    shadow.appendChild(input);
+  }
+
   drawScore() {
-    const shadow = (this.shadowRoot == null) ? this.attachShadow({mode: 'open'}) : this.shadowRoot;
+    const shadow = this.shadowRoot;
     const score = new ScoreGame();
     score.setAttribute('id', 'score');
     shadow.appendChild(score);
   }
 
   drawBoard() {
-    const shadow = (this.shadowRoot == null) ? this.attachShadow({mode: 'open'}) : this.shadowRoot;
+    const shadow = this.shadowRoot;
     const div = document.createElement('div');
     div.setAttribute('id', 'board');
     this.boxes.forEach(box => {div.appendChild(box);});
-    div.style.display = 'flex';
+    div.style.display = 'grid';
+    div.style.width = '100%';
+    div.style.height = 'auto';
+    div.style.grid = 'auto-flow / 1fr 1fr 1fr 1fr 1fr';
     shadow.appendChild(div);
   }
 }
 
-customElements.define('score-game', ScoreGame);
 customElements.define('box-game', BoxGame);
+customElements.define('score-game', ScoreGame);
 customElements.define('board-game', BoardGame);
 
 let trainingGameElement = document.createElement('board-game');
+trainingGameElement.setAttribute('box-count' , '5');
 document.body.appendChild(trainingGameElement);
