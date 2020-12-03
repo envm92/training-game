@@ -36,10 +36,11 @@ class BoxGame extends HTMLElement {
   openBox() {
     const shadow = this.shadowRoot;
     const div = shadow.getElementById('box');
-    div.style.background = 
-      (this.getAttribute('winner') === 'true') ? 'blue': 'red';
+    div.style.background =
+        (this.getAttribute('winner') === 'true') ? 'blue': 'red';
   }
 }
+
 
 class ScoreGame extends HTMLElement {
   constructor() {
@@ -100,7 +101,6 @@ class ScoreGame extends HTMLElement {
 }
 
 class BoardGame extends HTMLElement {
-
   boxCount = 5;
   winner = 0;
   plays = 0;
@@ -111,6 +111,7 @@ class BoardGame extends HTMLElement {
     this.boxCount =  this.hasAttribute('box-count') ? this.getAttribute('box-count') : 5;
     this.won = 0;
     this.lost = 0;
+    this.drawBoxInput();
     this.drawScore();
     this.startGame();
   }
@@ -133,7 +134,7 @@ class BoardGame extends HTMLElement {
   initGame() {
     this.winner = Math.floor(Math.random() * Math.floor(this.boxCount));
     this.plays = 0;
-    this.boxes = Array.from({length:this.boxCount},(_, i) => {
+    this.boxes = Array.from({length:this.boxCount},(value, i) => {
       const box = new BoxGame( this.winner === i );
       box.setAttribute('winner', String(this.winner === i));
       box.addEventListener('click', (_) => {
@@ -178,15 +179,28 @@ class BoardGame extends HTMLElement {
     shadow.removeChild(shadow.getElementById('board'));
   }
 
+  drawBoxInput() {
+    const shadow = this.attachShadow({mode: 'open'});
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = '5';
+    input.setAttribute('min', '5');
+    input.addEventListener('input', (event) => {
+      const value = parseInt(event.target.value);
+      this.setAttribute('box-count', `${(value < 5)? 5 : value}`);
+    });
+    shadow.appendChild(input);
+  }
+
   drawScore() {
-    const shadow = (this.shadowRoot == null) ? this.attachShadow({mode: 'open'}) : this.shadowRoot;
+    const shadow = this.shadowRoot;
     const score = new ScoreGame();
     score.setAttribute('id', 'score');
     shadow.appendChild(score);
   }
 
   drawBoard() {
-    const shadow = (this.shadowRoot == null) ? this.attachShadow({mode: 'open'}) : this.shadowRoot;
+    const shadow = this.shadowRoot;
     const div = document.createElement('div');
     div.setAttribute('id', 'board');
     this.boxes.forEach(box => {div.appendChild(box);});
@@ -195,9 +209,10 @@ class BoardGame extends HTMLElement {
   }
 }
 
-customElements.define('score-game', ScoreGame);
 customElements.define('box-game', BoxGame);
+customElements.define('score-game', ScoreGame);
 customElements.define('board-game', BoardGame);
 
 let trainingGameElement = document.createElement('board-game');
+trainingGameElement.setAttribute('box-count' , '5');
 document.body.appendChild(trainingGameElement);
