@@ -16,7 +16,6 @@ class BoxGame extends HTMLElement {
             div {
                 background: gray;
                 align-items: center;
-                color: #fff;
                 text-shadow: #000 0 0;
                 border-radius: 15px;
 				margin: 10px;
@@ -35,14 +34,69 @@ class BoxGame extends HTMLElement {
 	}
 
 	openBox() {
-		const shadow =  this.shadowRoot;
+		const shadow = this.shadowRoot;
 		const div = shadow.getElementById('box');
-		if (this.getAttribute('winner') === 'true') {
-			div.style.background = 'blue';
-		} else {
-			div.style.background = 'red';
+		div.style.background = 
+			(this.getAttribute('winner') == 'true') ? 'blue': 'red';
+	}
+}
+
+class ScoreGame extends HTMLElement {
+	constructor() {
+		super();
+		const shadow =  this.attachShadow({mode: 'open'});
+		const div = document.createElement('div');
+		const wonDiv = document.createElement('div');
+		const wonH1 = document.createElement('h1');
+		wonH1.textContent = 'Won: ';
+		const wonSpan = document.createElement('span');
+		wonSpan.textContent = this.getAttribute('won') | 0;
+		wonSpan.setAttribute('id', 'won-span');
+		wonH1.appendChild(wonSpan);
+		wonDiv.appendChild(wonH1);
+		div.appendChild(wonDiv);
+
+		const lostDiv = document.createElement('div');
+		const lostH1 = document.createElement('h1');
+		lostH1.textContent = 'Lost: ';
+		const lostSpan = document.createElement('span');
+		lostSpan.textContent = this.getAttribute('lost') | 0;
+		lostSpan.setAttribute('id', 'lost-span');
+		lostH1.appendChild(lostSpan);
+		lostDiv.appendChild(lostH1);
+		div.appendChild(lostDiv);
+
+		shadow.appendChild(div);
+		shadow.appendChild(this.getStyles());
+	}
+
+	static get observedAttributes() { return ['won', 'lost']; }
+
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (name == 'won' || name == 'lost') {
+			const shadow =  this.shadowRoot;
+			const span = shadow.getElementById(`${name}-span`);
+			span.textContent = this.getAttribute(name) | 0;
 		}
 	}
+
+	getStyles() {
+		const style = document.createElement('style');
+        style.textContent = `
+            div {
+                background: pink;
+                color: #fff;
+                text-shadow: #000 0 0;
+                border-radius: 15px;
+				width: 300px;
+    			height: 60px;
+				display: flex;
+			}
+			
+		`;
+		return style;
+	}
+	
 }
 
 class BoardGame extends HTMLElement {
@@ -55,6 +109,9 @@ class BoardGame extends HTMLElement {
 	constructor() {
 		super();
 		this.boxCount =  this.hasAttribute('box-count') ? this.getAttribute('box-count') : 5;
+		this.won = 0;
+		this.lost = 0;
+		this.drawScore();
 		this.startGame();
 	}
 
@@ -75,13 +132,27 @@ class BoardGame extends HTMLElement {
 				this.plays++;
 				if(isWinner) {
 					this.showAlert('You win!!');
+					this.updateScore(isWinner);
 				} else if(!isWinner && this.plays == 3) {
 					this.showAlert('Game over');
+					this.updateScore(isWinner);
 				}
 				return isWinner;
 			});
 			return box;
 		});
+	}
+
+	updateScore(win) {
+		const shadow = this.shadowRoot;
+		const score = shadow.getElementById('score');
+		if (win) {
+			this.won++;
+			score.setAttribute('won', this.won);
+		} else {
+			this.lost++;
+			score.setAttribute('lost', this.lost);
+		}
 	}
 
 	showAlert(msg) {
@@ -97,6 +168,13 @@ class BoardGame extends HTMLElement {
 		shadow.removeChild(shadow.getElementById('board'));
 	}
 
+	drawScore() {
+		const shadow = (this.shadowRoot == null) ? this.attachShadow({mode: 'open'}) : this.shadowRoot;
+		const score = new ScoreGame();
+		score.setAttribute('id', 'score');
+		shadow.appendChild(score);
+	}
+
 	drawBoard() {
 		const shadow = (this.shadowRoot == null) ? this.attachShadow({mode: 'open'}) : this.shadowRoot;
 		const div = document.createElement('div');
@@ -107,6 +185,7 @@ class BoardGame extends HTMLElement {
 	}
 }
 
+customElements.define('score-game', ScoreGame);
 customElements.define('box-game', BoxGame);
 customElements.define('board-game', BoardGame);
 
