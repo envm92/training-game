@@ -27,7 +27,7 @@ class BoxGame extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'open') {
+    if (name === 'open' && newValue === 'true') {
       this.openBox();
     }
   }
@@ -136,18 +136,21 @@ class BoardGame extends HTMLElement {
     this.boxes = Array.from({length:this.boxCount},(value, i) => {
       const box = new BoxGame( this.winner === i );
       box.setAttribute('winner', String(this.winner === i));
+      box.setAttribute('open', 'false');
       box.addEventListener('click', (_) => {
-        box.setAttribute('open' , '');
-        const isWinner = this.winner === i;
-        this.plays++;
-        if(isWinner) {
-          this.showAlert('You win!!');
-          this.updateScore(isWinner);
-        } else if(!isWinner && this.plays === 3) {
-          this.showAlert('Game over');
-          this.updateScore(isWinner);
+        const opened = box.getAttribute('open');
+        if ( opened === 'false') {
+          box.setAttribute('open', 'true');
+          const isWinner = this.winner === i;
+          this.plays++;
+          if(isWinner) {
+            this.showAlert('You win!!');
+            this.updateScore(isWinner);
+          } else if(!isWinner && this.plays === 3) {
+            this.showAlert('Game over');
+            this.updateScore(isWinner);
+          }
         }
-        return isWinner;
       });
       return box;
     });
