@@ -122,6 +122,7 @@ class BoardGame extends HTMLElement {
       this.boxCount = newValue;
       this.clearBoard();
       this.startGame();
+      this.updateInput(newValue);
     }
   }
 
@@ -181,11 +182,21 @@ class BoardGame extends HTMLElement {
     shadow.removeChild(shadow.getElementById('board'));
   }
 
+  updateInput(newValue) {
+    const shadow = this.shadowRoot;
+    const input = shadow.getElementById('box-count');
+    if (input.value !== newValue) {
+      input.value = newValue;
+    }
+
+  }
+
   drawBoxInput() {
     const shadow = this.attachShadow({mode: 'open'});
     const input = document.createElement('input');
     input.type = 'number';
     input.value = '5';
+    input.setAttribute('id', 'box-count');
     input.setAttribute('min', '5');
     input.setAttribute('max', '10000');
     input.addEventListener('input', (event) => {
