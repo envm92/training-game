@@ -1,114 +1,237 @@
 class BoxGame extends HTMLElement {
-	constructor() {
-		super();
-		const shadow =  this.attachShadow({mode: 'open'});
-		const div = document.createElement('div');
-		div.setAttribute('id', 'box');
-		shadow.appendChild(div);
-		shadow.appendChild(this.getStyles());
-	}
+  constructor() {
+    super();
+    const shadow =  this.attachShadow({mode: 'open'});
+    const div = document.createElement('div');
+    div.setAttribute('id', 'box');
+    shadow.appendChild(div);
+    shadow.appendChild(this.getStyles());
+  }
 
-	static get observedAttributes() { return ['open']; }
+  static get observedAttributes() { return ['open']; }
 
-	getStyles() {
-		const style = document.createElement('style');
-        style.textContent = `
-            div {
-                background: gray;
-                align-items: center;
-                color: #fff;
-                text-shadow: #000 0 0;
-                border-radius: 15px;
-				margin: 10px;
-				height: 60px;
-				width: 60px;
-			}
-			
-		`;
-		return style;
-	}
+  getStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      div {
+        background: gray;
+        align-items: center;
+        text-shadow: #000 0 0;
+        border-radius: 15px;
+        margin: 10px;
+        height: 60px;
+        width: 60px;
+      }
+    `;
+    return style;
+  }
 
-	attributeChangedCallback(name, oldValue, newValue) {
-		if (name == 'open') {
-			this.openBox();
-		}
-	}
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'open' && newValue === 'true') {
+      this.openBox();
+    }
+  }
 
-	openBox() {
-		const shadow =  this.shadowRoot;
-		const div = shadow.getElementById('box');
-		if (this.getAttribute('winner') === 'true') {
-			div.style.background = 'blue';
-		} else {
-			div.style.background = 'red';
-		}
-	}
+  openBox() {
+    const shadow = this.shadowRoot;
+    const div = shadow.getElementById('box');
+    div.style.background =
+        (this.getAttribute('winner') === 'true') ? 'blue': 'red';
+  }
+}
+
+
+class ScoreGame extends HTMLElement {
+  constructor() {
+    super();
+    const shadow =  this.attachShadow({mode: 'open'});
+    const div = document.createElement('div');
+    const wonDiv = document.createElement('div');
+    const wonH1 = document.createElement('h1');
+    wonH1.textContent = 'Won: ';
+    const wonSpan = document.createElement('span');
+    wonSpan.textContent = String(this.getAttribute('won') | 0);
+    wonSpan.setAttribute('id', 'won-span');
+    wonH1.appendChild(wonSpan);
+    wonDiv.appendChild(wonH1);
+    div.appendChild(wonDiv);
+
+    const lostDiv = document.createElement('div');
+    const lostH1 = document.createElement('h1');
+    lostH1.textContent = 'Lost: ';
+    const lostSpan = document.createElement('span');
+    lostSpan.textContent = String(this.getAttribute('lost') | 0);
+    lostSpan.setAttribute('id', 'lost-span');
+    lostH1.appendChild(lostSpan);
+    lostDiv.appendChild(lostH1);
+    div.appendChild(lostDiv);
+
+    shadow.appendChild(div);
+    shadow.appendChild(this.getStyles());
+  }
+
+  static get observedAttributes() { return ['won', 'lost']; }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'won' || name === 'lost') {
+      const shadow =  this.shadowRoot;
+      const span = shadow.getElementById(`${name}-span`);
+      span.textContent = String(this.getAttribute(name) | 0);
+    }
+  }
+
+  getStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      div {
+        background: pink;
+        color: #fff;
+        text-shadow: #000 0 0;
+        border-radius: 15px;
+        width: 300px;
+        height: 60px;
+        display: flex;
+      }
+      
+    `;
+    return style;
+  }
+  
 }
 
 class BoardGame extends HTMLElement {
+  boxCount = 5;
+  winner = 0;
+  plays = 0;
+  boxes = [];
 
-	boxCount = 5;
-	winner = 0;
-	plays = 0;
-	boxes = [];
+  constructor() {
+    super();
+    this.boxCount =  this.hasAttribute('box-count') ? this.getAttribute('box-count') : 5;
+    this.won = 0;
+    this.lost = 0;
+    this.drawBoxInput();
+    this.drawScore();
+    this.startGame();
+  }
 
-	constructor() {
-		super();
-		this.boxCount =  this.hasAttribute('box-count') ? this.getAttribute('box-count') : 5;
-		this.startGame();
-	}
+  static get observedAttributes() { return ['box-count']; }
 
-	startGame() {
-		this.initGame();
-		this.drawBoard();
-	}
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'box-count') {
+      this.boxCount = newValue;
+      this.clearBoard();
+      this.startGame();
+      this.updateInput(newValue);
+    }
+  }
 
-	initGame() {
-		this.winner = Math.floor(Math.random() * Math.floor(this.boxCount));
-		this.plays = 0;
-		this.boxes = Array.from({length:this.boxCount},(_, i) => {
-			const box = new BoxGame( this.winner == i );
-			box.setAttribute('winner', this.winner == i);
-			box.addEventListener('click', (_) => {
-				box.setAttribute('open' , '');
-				const isWinner = this.winner == i;
-				this.plays++;
-				if(isWinner) {
-					this.showAlert('You win!!');
-				} else if(!isWinner && this.plays == 3) {
-					this.showAlert('Game over');
-				}
-				return isWinner;
-			});
-			return box;
-		});
-	}
+  startGame() {
+    this.initGame();
+    this.drawBoard();
+  }
 
-	showAlert(msg) {
-		setTimeout(() => {
-			alert(msg)
-			this.clearBoard();
-			this.startGame();
-		}, 200);
-	}
+  initGame() {
+    this.winner = Math.floor(Math.random() * Math.floor(this.boxCount));
+    this.plays = 0;
+    this.boxes = Array.from({length:this.boxCount},(value, i) => {
+      const box = new BoxGame( this.winner === i );
+      box.setAttribute('winner', String(this.winner === i));
+      box.setAttribute('open', 'false');
+      box.addEventListener('click', (_) => {
+        const opened = box.getAttribute('open');
+        if ( opened === 'false') {
+          box.setAttribute('open', 'true');
+          const isWinner = this.winner === i;
+          this.plays++;
+          if(isWinner) {
+            this.showAlert('You win!!');
+            this.updateScore(isWinner);
+          } else if(!isWinner && this.plays === 3) {
+            this.showAlert('Game over');
+            this.updateScore(isWinner);
+          }
+        }
+      });
+      return box;
+    });
+  }
 
-	clearBoard() {
-		const shadow = this.shadowRoot;
-		shadow.removeChild(shadow.getElementById('board'));
-	}
+  updateScore(win) {
+    const shadow = this.shadowRoot;
+    const score = shadow.getElementById('score');
+    if (win) {
+      this.won++;
+      score.setAttribute('won', this.won);
+    } else {
+      this.lost++;
+      score.setAttribute('lost', this.lost);
+    }
+  }
 
-	drawBoard() {
-		const shadow = (this.shadowRoot == null) ? this.attachShadow({mode: 'open'}) : this.shadowRoot;
-		const div = document.createElement('div');
-		div.setAttribute('id', 'board');
-		this.boxes.forEach(box => {div.appendChild(box);});
-		div.style.display = 'flex';
-		shadow.appendChild(div);
-	}
+  showAlert(msg) {
+    setTimeout(() => {
+      alert(msg)
+      this.clearBoard();
+      this.startGame();
+    }, 200);
+  }
+
+  clearBoard() {
+    const shadow = this.shadowRoot;
+    shadow.removeChild(shadow.getElementById('board'));
+  }
+
+  updateInput(newValue) {
+    const shadow = this.shadowRoot;
+    const input = shadow.getElementById('box-count');
+    if (input.value !== newValue) {
+      input.value = newValue;
+    }
+
+  }
+
+  drawBoxInput() {
+    const shadow = this.attachShadow({mode: 'open'});
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = '5';
+    input.setAttribute('id', 'box-count');
+    input.setAttribute('min', '5');
+    input.setAttribute('max', '10000');
+    input.addEventListener('input', (event) => {
+      let value = parseInt(event.target.value);
+      value = (value < 5 ) ? 5 : value;
+      value = (value > 10000) ?  10000 : value;
+      this.setAttribute('box-count', String(value));
+    });
+    shadow.appendChild(input);
+  }
+
+  drawScore() {
+    const shadow = this.shadowRoot;
+    const score = new ScoreGame();
+    score.setAttribute('id', 'score');
+    shadow.appendChild(score);
+  }
+
+  drawBoard() {
+    const shadow = this.shadowRoot;
+    const div = document.createElement('div');
+    div.setAttribute('id', 'board');
+    this.boxes.forEach(box => {div.appendChild(box);});
+    div.style.display = 'grid';
+    div.style.width = '100%';
+    div.style.height = 'auto';
+    div.style.grid = 'auto-flow / 1fr 1fr 1fr 1fr 1fr';
+    shadow.appendChild(div);
+  }
 }
 
 customElements.define('box-game', BoxGame);
+customElements.define('score-game', ScoreGame);
 customElements.define('board-game', BoardGame);
 
 let trainingGameElement = document.createElement('board-game');
+trainingGameElement.setAttribute('box-count' , '5');
 document.body.appendChild(trainingGameElement);
